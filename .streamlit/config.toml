@@ -1,0 +1,13 @@
+# Streamlit 界面主题(深色专业风)+ 服务设置
+[theme]
+base = "dark"
+primaryColor = "#f0b90b"            # 主色:金色(按钮/滑块/选中态)
+backgroundColor = "#0e1117"         # 页面背景
+secondaryBackgroundColor = "#161b26" # 侧边栏/卡片背景
+textColor = "#e6e6e6"
+
+[server]
+headless = true                     # 启动时不强制弹浏览器(手动打开网址即可)
+
+[browser]
+gatherUsageStats = false            # 不上报使用统计

@@ -1,0 +1,28 @@
+# PyInstaller 版本信息文件:把作者/版权写进 exe 的属性(右键→属性→详细信息)。
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 0, 0, 0),
+    prodvers=(1, 0, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable('080404b0', [
+        StringStruct('CompanyName', '张佳泽 (Zhang Jiaze)'),
+        StringStruct('FileDescription', '量化终端 · quantify 行情/回测分析终端'),
+        StringStruct('FileVersion', '1.0.0.0'),
+        StringStruct('InternalName', '量化终端'),
+        StringStruct('LegalCopyright', 'Copyright © 2026 张佳泽 (Zhang Jiaze). 保留所有权利。'),
+        StringStruct('OriginalFilename', '量化终端.exe'),
+        StringStruct('ProductName', '量化终端 quantify'),
+        StringStruct('ProductVersion', '1.0.0.0')
+      ])
+    ]),
+    VarFileInfo([VarStruct('Translation', [0x0804, 1200])])
+  ]
+)

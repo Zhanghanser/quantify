@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "quantify-dashboard",
+      "runtimeExecutable": "streamlit",
+      "runtimeArgs": ["run", "app.py", "--server.port", "8501"],
+      "port": 8501,
+      "autoPort": false
+    },
+    {
+      "name": "quantify-terminal",
+      "runtimeExecutable": ".venv\\Scripts\\python.exe",
+      "runtimeArgs": ["run_web.py"],
+      "port": 8000,
+      "autoPort": false
+    }
+  ]
+}

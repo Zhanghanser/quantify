@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>量化终端 · quantify</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/lightweight-charts.js"></script>
+</head>
+<body>
+
+<!-- ====== 顶部行情条(仿交易所 Ticker Bar)====== -->
+<header id="topbar">
+  <div class="brand">⚡ 量化终端</div>
+  <select id="market" title="市场"></select>
+  <input id="symbol" list="symbol-list" spellcheck="false" title="标的(可输入自定义代码)">
+  <datalist id="symbol-list"></datalist>
+  <span id="sym-name" title="标的名称"></span>
+
+  <div class="ticker">
+    <span id="live-dot" class="live-dot" title="实时连接状态"></span>
+    <div class="price" id="t-price">--</div>
+    <div class="tk"><span id="t-chg-label">涨跌幅</span><b id="t-chg">--</b></div>
+    <div class="tk"><span>区间最高</span><b id="t-high">--</b></div>
+    <div class="tk"><span>区间最低</span><b id="t-low">--</b></div>
+    <div class="tk"><span>区间成交量</span><b id="t-vol">--</b></div>
+  </div>
+
+  <div class="spacer"></div>
+  <button id="opt-open" class="ghost" title="国内大宗商品期权 · 期权链T型报价">🧩 商品期权</button>
+  <button id="scalp-mode" class="ghost" title="一键短线:5分钟周期 + 决策台 + 15秒刷新信号">⚡ 短线模式</button>
+  <button id="refresh-btn" class="ghost" title="拉取最新行情(跳过缓存)">⟳ 刷新</button>
+  <button id="color-toggle" class="ghost" title="切换涨跌颜色习惯">🎨 红涨绿跌</button>
+</header>
+
+<!-- ====== 图表工具栏 ====== -->
+<div id="toolbar">
+  <div class="tf-group" id="tf-group"></div>
+  <span class="sep"></span>
+
+  <span class="lbl">主图</span>
+  <div class="chip-group" id="chips-main"></div>
+  <span class="sep"></span>
+
+  <span class="lbl">副图</span>
+  <div class="chip-group" id="chips-sub"></div>
+  <span class="sep"></span>
+
+  <button id="ind-settings" class="ghost small">⚙️ 指标设置</button>
+  <span class="sep"></span>
+
+  <span class="lbl">价格轴</span>
+  <div class="chip-group" id="price-mode">
+    <button class="chip active" data-mode="Normal" title="线性轴">线性</button>
+    <button class="chip" data-mode="Logarithmic" title="对数轴(看长期百分比涨跌更合理)">对数</button>
+    <button class="chip" data-mode="Percentage" title="百分比轴(以可见区间起点为0%)">%</button>
+  </div>
+  <span class="sep"></span>
+
+  <span class="lbl">K线数量</span>
+  <select id="limit">
+    <option>500</option><option selected>1000</option>
+    <option>2000</option><option>3000</option>
+  </select>
+  <span class="sep"></span>
+
+  <span class="lbl">默认显示</span>
+  <select id="default-bars" title="打开/切换时默认显示最近多少根K线">
+    <option value="80">80根</option>
+    <option value="120">120根</option>
+    <option value="160" selected>160根</option>
+    <option value="240">240根</option>
+    <option value="360">360根</option>
+    <option value="0">全部</option>
+  </select>
+  <span class="sep"></span>
+
+  <label class="ind"><input type="checkbox" id="chart-type">折线</label>
+</div>
+
+<!-- ====== 主体:图表区 + 右侧策略面板 ====== -->
+<main>
+  <section id="charts">
+    <div id="chart-stack">
+      <div id="legend"><div id="legend-ohlc"></div><div id="legend-ind"></div></div>
+      <div id="synthetic-badge" class="hidden">⚠ 模拟数据 · 仅供演示流程,非真实行情</div>
+      <div id="countdown" class="hidden"></div>
+      <div id="main-chart"></div>
+    </div>
+    <div id="chart-resizer" title="上下拖动调整K线图高度"></div>
+    <div id="sub-panes"></div>
+    <div id="equity-wrap" class="hidden">
+      <div class="pane-title">回测资金曲线 <span class="dim">(金=策略 · 灰虚线=买入持有 · 红柱=回撤)</span></div>
+      <div id="equity-chart"></div>
+    </div>
+    <!-- 逐笔交易(随图表列一起在左栏内滚动)-->
+    <section id="trades-wrap" class="hidden">
+      <div class="pane-title">📋 逐笔交易 <span id="trade-count" class="dim"></span></div>
+      <div id="trades"></div>
+    </section>
+  </section>
+
+  <aside id="panel">
+    <div class="panel-tabs">
+      <button class="ptab active" data-tab="bt">🧪 回测</button>
+      <button class="ptab" data-tab="live">📡 实时决策</button>
+    </div>
+
+    <div id="tab-bt" class="panel-pane">
+    <label class="field"><span>策略</span><select id="strategy"></select></label>
+    <div id="param-box"></div>
+
+    <h4>🛡️ 风控</h4>
+    <div class="risk-grid">
+      <label class="field"><span>止损 %</span><input id="r-sl" type="number" value="10" min="0" max="50"></label>
+      <label class="field"><span>止盈 %</span><input id="r-tp" type="number" value="0" min="0" max="200"></label>
+      <label class="field"><span>仓位 %</span><input id="r-ps" type="number" value="50" min="1" max="100"></label>
+      <label class="field"><span>熔断 %</span><input id="r-dd" type="number" value="25" min="0" max="80"></label>
+    </div>
+    <label class="field"><span>初始资金</span><input id="r-cap" type="number" value="10000" min="100" step="1000"></label>
+
+    <button id="run-bt" class="primary">▶ 运行回测</button>
+
+    <div id="signal-box" class="hidden"></div>
+    <div id="metrics" class="metrics-grid"></div>
+
+    <div id="health" class="desk-sec hidden"></div>
+    <button id="robust-btn" class="ghost small hidden">🔬 稳健性检验(手续费敏感度 + 样本外)</button>
+    <div id="robust" class="desk-sec hidden"></div>
+
+    <div class="disclaimer">
+      ⚠️ 只回测、只显示信号,<b>绝不自动下单</b>。回测好看 ≠ 实盘赚钱;
+      真金白银前必须:样本外检验 → 测试网 → 极小资金试水。
+    </div>
+    </div><!-- /tab-bt -->
+
+    <!-- ============ 实时决策台 ============ -->
+    <div id="tab-live" class="panel-pane hidden">
+      <div class="live-head">
+        <button id="live-toggle" class="primary">▶ 开始信号提醒</button>
+        <select id="live-interval" title="刷新频率">
+          <option value="15">每15秒</option>
+          <option value="30" selected>每30秒</option>
+          <option value="60">每1分</option>
+          <option value="180">每3分</option>
+        </select>
+      </div>
+      <div id="live-updated" class="dim">行情已在实时刷新;此处仅开关"出信号时主动提醒我"(声音+通知)。</div>
+
+      <div id="new-sig-alert" class="hidden"></div>
+
+      <!-- 多标的自选监控 -->
+      <div class="desk-sec">
+        <div class="desk-h">📋 自选监控 <span class="dim" id="wl-count"></span>
+          <span class="spike-cfg">异动提醒 ≥<input id="spike-thresh" type="number" value="1" min="0.1" max="20" step="0.1">% / 1分</span>
+        </div>
+        <div class="wl-add">
+          <input id="wl-input" spellcheck="false" placeholder="加自选,如 DOGE/USDT">
+          <button id="wl-add-btn" class="ghost small">+ 加入</button>
+        </div>
+        <div id="watchlist"></div>
+      </div>
+
+      <div class="desk-h" style="margin-top:2px">▼ 当前标的详情(点上面任意一行切换)</div>
+      <div id="rec-card" class="rec-card rec-flat"><div class="rec-dir">—</div><div class="rec-sub">等待数据</div></div>
+
+      <div class="desk-sec"><div class="desk-h">多策略共识</div><div id="consensus"></div></div>
+      <div class="desk-sec"><div class="desk-h">盘面解读</div><div id="reads"></div></div>
+      <div class="desk-sec">
+        <div class="desk-h">📋 建议订单 <span class="dim">— 照着自己手动下单</span></div>
+        <div id="ticket"></div>
+      </div>
+
+      <!-- 事件合约·超短实时方向(仅币圈)-->
+      <div class="desk-sec" id="event-sec">
+        <div class="desk-h">⚡ 事件合约·超短方向 <button id="event-refresh" class="ghost small">刷新</button></div>
+        <div class="event-cfg">
+          <label>平台赔率
+            <input type="number" id="event-payout" value="1.80" min="1.1" max="3" step="0.01">
+          </label>
+          <span class="dim" id="event-be"></span>
+          <span class="dim">← 填你平台真实赔率,保本线随之变</span>
+        </div>
+        <div id="event-warn" class="event-warn"></div>
+        <div id="event-rows"></div>
+      </div>
+
+      <div class="disclaimer">
+        ⚠️ 实时决策台只给<b>信号和建议</b>,<b>绝不自动下单</b>。下单与最终决定永远由你亲手操作并负责。
+        信号好看 ≠ 实盘必赚;事件合约更是<b>负期望的赌博</b>,想清楚再碰。先用小钱验证。
+      </div>
+    </div><!-- /tab-live -->
+  </aside>
+</main>
+
+<!-- ====== 指标设置弹窗(参数全部可自定义,修改即时生效并自动保存)====== -->
+<div id="ind-modal" class="hidden">
+  <div class="modal-card">
+    <div class="modal-head">⚙️ 指标设置 <button id="modal-close" class="ghost">✕</button></div>
+    <div class="modal-body">
+
+      <h5>主图 · 移动平均线 MA</h5>
+      <div class="cfg-row"><label><input type="checkbox" data-path="ma.lines.0.on"><i class="dot" style="color:#f0b90b">●</i>MA</label><input type="number" data-path="ma.lines.0.p" min="2" max="500"></div>
+      <div class="cfg-row"><label><input type="checkbox" data-path="ma.lines.1.on"><i class="dot" style="color:#e056a0">●</i>MA</label><input type="number" data-path="ma.lines.1.p" min="2" max="500"></div>
+      <div class="cfg-row"><label><input type="checkbox" data-path="ma.lines.2.on"><i class="dot" style="color:#8950fa">●</i>MA</label><input type="number" data-path="ma.lines.2.p" min="2" max="500"></div>
+      <div class="cfg-row"><label><input type="checkbox" data-path="ma.lines.3.on"><i class="dot" style="color:#36c5f0">●</i>MA</label><input type="number" data-path="ma.lines.3.p" min="2" max="500"></div>
+
+      <h5>主图 · 指数均线 EMA</h5>
+      <div class="cfg-row"><label><input type="checkbox" data-path="ema.lines.0.on"><i class="dot" style="color:#74c0fc">●</i>EMA</label><input type="number" data-path="ema.lines.0.p" min="2" max="500"></div>
+      <div class="cfg-row"><label><input type="checkbox" data-path="ema.lines.1.on"><i class="dot" style="color:#7af0c3">●</i>EMA</label><input type="number" data-path="ema.lines.1.p" min="2" max="500"></div>
+
+      <h5>主图 · 布林带 BOLL</h5>
+      <div class="cfg-row"><span class="cfg-lbl">周期</span><input type="number" data-path="boll.p" min="2" max="200">
+        <span class="cfg-lbl">倍数</span><input type="number" data-path="boll.k" min="0.5" max="5" step="0.1"></div>
+
+      <h5>副图 · MACD</h5>
+      <div class="cfg-row"><span class="cfg-lbl">快线</span><input type="number" data-path="subs.macd.fast" min="2" max="100">
+        <span class="cfg-lbl">慢线</span><input type="number" data-path="subs.macd.slow" min="3" max="200">
+        <span class="cfg-lbl">信号</span><input type="number" data-path="subs.macd.sig" min="2" max="50"></div>
+
+      <h5>副图 · RSI(可多条)</h5>
+      <div class="cfg-row"><label><input type="checkbox" data-path="subs.rsi.lines.0.on"><i class="dot" style="color:#f0b90b">●</i>RSI</label><input type="number" data-path="subs.rsi.lines.0.p" min="2" max="100"></div>
+      <div class="cfg-row"><label><input type="checkbox" data-path="subs.rsi.lines.1.on"><i class="dot" style="color:#e056a0">●</i>RSI</label><input type="number" data-path="subs.rsi.lines.1.p" min="2" max="100"></div>
+      <div class="cfg-row"><label><input type="checkbox" data-path="subs.rsi.lines.2.on"><i class="dot" style="color:#8950fa">●</i>RSI</label><input type="number" data-path="subs.rsi.lines.2.p" min="2" max="100"></div>
+
+      <h5>副图 · KDJ</h5>
+      <div class="cfg-row"><span class="cfg-lbl">N</span><input type="number" data-path="subs.kdj.n" min="2" max="100">
+        <span class="cfg-lbl">K</span><input type="number" data-path="subs.kdj.kp" min="1" max="20">
+        <span class="cfg-lbl">D</span><input type="number" data-path="subs.kdj.dp" min="1" max="20"></div>
+
+    </div>
+    <div class="modal-foot">
+      <button id="cfg-reset" class="ghost">恢复默认</button>
+      <span class="dim">修改即时生效,自动保存</span>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 版权提醒弹窗(进入页面即弹,点"进入"关闭)====== -->
+<div id="copyright-modal">
+  <div class="cr-card">
+    <div class="cr-logo">📈</div>
+    <div class="cr-title">量化终端 · quantify</div>
+    <div class="cr-author">作者：张佳泽 <span class="cr-role">软件工程师</span></div>
+    <div class="cr-copy">Copyright © 2026 张佳泽　保留所有权利</div>
+    <div class="cr-note">本软件仅供学习与策略研究使用，<b>只回测 / 只显示信号，绝不自动下单、不碰资金</b>，不构成任何投资建议。未经作者授权，请勿用于商业用途或二次分发。</div>
+    <button id="cr-ok" class="cr-btn">我已知晓，进入</button>
+  </div>
+</div>
+<script>
+  // 版权弹窗的关闭逻辑写成内联,独立于主程序,保证一定能关掉。
+  (function () {
+    var m = document.getElementById("copyright-modal");
+    function close() { if (m) m.classList.add("hidden"); }
+    var ok = document.getElementById("cr-ok");
+    if (ok) ok.addEventListener("click", close);
+    if (m) m.addEventListener("click", function (e) { if (e.target === m) close(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+  })();
+</script>
+
+<!-- ====== 国内商品期权 · 期权链(独立全屏视图,默认隐藏)====== -->
+<div id="options-view" class="hidden">
+  <div class="opt-head">
+    <div class="opt-brand">🧩 国内大宗商品期权 · 期权链</div>
+    <label class="opt-sel"><span>交易所</span><select id="opt-exchange"></select></label>
+    <label class="opt-sel"><span>品种</span><select id="opt-product"></select></label>
+    <label class="opt-sel"><span>到期月</span><select id="opt-contract"></select></label>
+    <button id="opt-refresh" class="ghost small" title="刷新当前期权链">⟳ 刷新</button>
+    <span id="opt-status" class="dim"></span>
+    <div class="spacer"></div>
+    <button id="opt-close" class="ghost">✕ 返回行情</button>
+  </div>
+
+  <div class="opt-note">
+    ⚠️ <b>只读展示真实行情,绝不下单</b>。数据来自新浪免费接口(境内直连)。
+    <b>隐含波动率 IV / 希腊字母</b>由本地 Black-76 模型实时反解(标的价 F 由看跌-看涨平价反推、
+    到期日按交易所规则近似,均为<b>估算值</b>,仅供参考)。
+    新浪免费数据仅覆盖约 28 个主流品种,鸡蛋/原油/燃油等冷门或新上品种暂不在内。
+  </div>
+
+  <div class="opt-analytics" id="opt-analytics"></div>
+
+  <div class="opt-body">
+    <section class="opt-chain-wrap">
+      <div class="opt-chain-head">
+        <span class="opt-side-tag call">看涨 CALL</span>
+        <span class="opt-strike-tag">行权价</span>
+        <span class="opt-side-tag put">看跌 PUT</span>
+      </div>
+      <div class="opt-chain-scroll">
+        <table id="opt-chain">
+          <thead>
+            <tr>
+              <th>持仓</th><th>买价</th><th class="hot">最新</th><th>卖价</th><th>涨跌</th><th class="opt-iv">IV</th>
+              <th class="opt-strike-col">行权价</th>
+              <th class="opt-iv">IV</th><th>涨跌</th><th>买价</th><th class="hot">最新</th><th>卖价</th><th>持仓</th>
+            </tr>
+          </thead>
+          <tbody id="opt-chain-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="opt-side-panel">
+      <div class="opt-kline-title" id="opt-kline-title">📈 点链上任意合约 → 看它的历史日K + 希腊字母</div>
+      <div id="opt-greeks" class="opt-greeks"></div>
+      <div id="opt-kline"></div>
+      <div class="opt-legend-note" id="opt-kline-meta"></div>
+      <div class="opt-disclaimer">
+        © 2026 张佳泽 · 量化终端　只回测 / 只显示行情 · 绝不下单、不碰资金
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div id="loading" class="hidden"><div class="spinner"></div><span>加载中…</span></div>
+<div id="toast" class="hidden"></div>
+
+<script src="/static/app.js"></script>
+<script src="/static/options.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# 项目依赖库。安装命令(在项目目录下运行):
+#   pip install -r requirements.txt
+
+pandas        # 数据处理核心库(表格、时间序列)
+numpy         # 数值计算
+ccxt          # 统一对接各大加密货币交易所(币安/OKX等),用来下载行情
+matplotlib    # 画图(资金曲线)
+streamlit     # 分析仪表盘框架(app.py)
+plotly        # 仪表盘交互图表
+fastapi       # 交易终端后端框架(run_web.py)
+uvicorn       # 运行 FastAPI 的服务器
+akshare       # 国内大宗商品期权数据(新浪免费接口:期权链T型报价/单合约日K),src/data/options.py 用

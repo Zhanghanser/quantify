@@ -1,0 +1,35 @@
+# ===== Python 缓存 =====
+__pycache__/
+*.pyc
+*.pyo
+
+# ===== 下载的行情数据(体积大,不进版本库) =====
+data/
+
+# ===== 生成的图片 =====
+*.png
+
+# ===== 虚拟环境 =====
+venv/
+.venv/
+env/
+
+# ===== 打包产物(PyInstaller 输出,体积极大,不进版本库) =====
+build/
+build_onefile/
+dist/
+dist_onefile/
+*.exe
+*.manifest
+
+# ===== 日志 =====
+*.log
+
+# ===== 编辑器 / IDE =====
+.idea/
+.vscode/
+*.swp
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db
