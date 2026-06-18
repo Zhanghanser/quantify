@@ -1,10 +1,77 @@
-# 多市场短线量化交易 · 学习项目
+<div align="center">
 
-一个**面向新手**的量化交易回测框架,支持**币圈 / A股 / 美股**,用同一套代码。
-目标:跑通"数据 → 策略 → 回测 → 风控 → 实时信号"的完整闭环,理解量化全流程。
+# 📈 量化终端 · quantify
 
-> ⚠️ **重要**:本项目只做**回测和信号显示**,**不会真实下单、不动你的钱**。
+**一套代码,三个市场。** 仿币安 / OKX 的专业 K 线交易终端 + 多策略回测引擎 + 实时信号决策台
+—— 纯 Python,免费开箱,**断网也能用**。
+
+*A Binance-style trading terminal for crypto / A-shares / US stocks — multi-strategy backtesting,
+real-time signals & an honest decision desk. Pure Python, free, offline-capable.*
+
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Charts](https://img.shields.io/badge/Charts-TradingView%20lightweight--charts-2962FF)
+![GitHub stars](https://img.shields.io/github/stars/Zhanghanser/quantify?style=flat&logo=github)
+![Last commit](https://img.shields.io/github/last-commit/Zhanghanser/quantify)
+![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Windows-lightgrey)
+
+</div>
+
+![专业 K 线交易终端](docs/screenshots/terminal.png)
+
+> ⚠️ **重要**:本项目只做**回测和信号显示**,**绝不自动下单、不碰你的钱**,不构成任何投资建议。
 > 回测赚钱 ≠ 实盘赚钱。真金白银前还有很长的路(见文末路线图)。
+
+---
+
+## ✨ 亮点速览
+
+- 🖥️ **专业 K 线终端**:TradingView 同款图表引擎(lightweight-charts),仿币安深色盘面 ——
+  滚轮缩放 / 拖拽 / 十字光标、线性·对数·百分比价格轴、红涨绿跌一键互换。
+- ⚡ **毫秒级实时行情**(币圈):直连 gate WebSocket,价格与最后一根 K 线实时跳动,带**收盘倒计时**。
+- 📊 **交易所级指标系统**:主图 MA×4 / EMA×2 / BOLL / 成交量,副图 MACD / RSI×3 / KDJ 可**同时多开**,
+  参数全自定义、十字光标跨图联动、数值跟随。
+- 📡 **实时决策台**:多策略**共识方向** + 人话**盘面解读** + 一张算好止损止盈仓位的**建议订单** ——
+  出新信号弹窗+响铃+通知,但**永远只给建议、绝不替你下单**。
+- 🧠 **9 个可插拔策略**:双均线 / 通道突破 / RSI 均值回归 / 趋势过滤 + 5 个短线策略(布林反弹 / RSI 快速反弹 / 带量突破 / VWAP 回归 / BOLL+RSI 双确认)。
+- 🩺 **短线体检 + 🔬 稳健性检验**:每笔期望、盈亏比、**手续费拖累**、样本外对比 —— 一眼看穿"这套短打是真有优势还是在给交易所打工"。
+- 🌍 **三市场统一接口**:币圈(ccxt)/ A 股(新浪)/ 美股(雅虎),换市场只改一行配置。
+- 🔒 **诚实**:连不上网用模拟数据会**打红标**;绩效指标样本太短自动置灰;事件合约直接把"负期望、长期必亏"摆给你看。
+
+![实时决策台](docs/screenshots/decision-desk.png)
+
+---
+
+## 🚀 快速开始
+
+```powershell
+pip install -r requirements.txt
+python run_web.py          # 然后浏览器打开 http://localhost:8000
+```
+
+停止:终端按 `Ctrl+C`。换市场 / 标的 / 策略,只改 [`config.py`](config.py) 一处即可。
+
+<details>
+<summary>🇬🇧 <b>English summary</b> (click to expand)</summary>
+
+**quantify** is a pure-Python quant toolkit with a professional, Binance/OKX-style trading terminal.
+One codebase covers **crypto, A-shares and US stocks**.
+
+- **Pro charting terminal** powered by TradingView's `lightweight-charts`: MA/EMA/BOLL/Volume on the main
+  pane, MACD/RSI/KDJ sub-panes, fully configurable, synced crosshair, log/linear/percent price axis.
+- **Millisecond real-time** crypto quotes via a direct gate WebSocket, with a candle-close countdown.
+- **Real-time decision desk**: multi-strategy consensus, plain-language market read, and a ready-to-use
+  order ticket (entry / stop / take-profit / position size). **It only signals — it never places orders.**
+- **9 pluggable strategies** (trend & mean-reversion, incl. 5 scalping strategies) + an event-driven
+  backtest engine with shorting, stops and drawdown circuit-breaker.
+- **Honesty by design**: synthetic-data fallback is flagged in red, annualized metrics are dimmed on short
+  samples, and the binary-options module shows you the real (losing) edge instead of hiding it.
+
+```bash
+pip install -r requirements.txt
+python run_web.py     # open http://localhost:8000
+```
+</details>
 
 ---
 
@@ -84,10 +151,10 @@ TIMEFRAME= "1h"         # 15m/1h/4h/1d ...
 STRATEGY = "dual_ma"    # dual_ma / rsi_reversion / breakout
 ```
 
-> 国内网络:币圈走 gate.io,美股走雅虎(可能需科学上网),A股走东方财富。
+> 国内网络:币圈走 gate.io,美股走雅虎(可能需科学上网),A股走新浪(绕代理直连)。
 > 连不上时会自动用**模拟数据**兜底,先让你跑通流程(假数据,别当真)。
 
-## 四、四个策略
+## 四、九个策略
 
 | 策略 | 类型 | 思路 |
 |------|------|------|
@@ -150,19 +217,13 @@ quantify/
 ├── run_validate.py      入口5:多标的诚实验证(固定参数+等权组合)
 ├── run_event.py         事件合约回测/实时信号(不下单)
 ├── data/                行情数据缓存(自动生成)
-├── equity_curve.png     资金曲线图(运行后生成)
 └── src/
     ├── data/            统一数据源接口(阶段5)
     │   ├── base.py        DataSource 基类 + 缓存 + 模拟兜底
     │   ├── crypto.py      币圈(ccxt)
-    │   ├── astock.py      A股(akshare)
+    │   ├── astock.py      A股(新浪)
     │   └── usstock.py     美股(yfinance)
-    ├── strategies/      策略包(阶段2)
-    │   ├── base.py        Strategy 基类
-    │   ├── dual_ma.py     双均线
-    │   ├── rsi_reversion.py  RSI均值回归
-    │   ├── breakout.py    通道突破
-    │   └── trend_filter.py   趋势过滤(双均线+大趋势过滤,稳健版)
+    ├── strategies/      策略包(阶段2)— 9 个策略,继承 Strategy 基类
     ├── indicators.py    技术指标(均线/RSI/ATR)
     ├── risk.py          风控:止损/止盈/仓位/回撤熔断(阶段4)
     ├── backtest.py      事件驱动回测引擎(支持做空+风控)
@@ -195,3 +256,12 @@ quantify/
 
 > 🛑 **铁律**:数据 → 回测 → 样本外检验 → 测试网 → 极小资金实盘,绝不跳步。
 > 任何"稳赚不赔/包教包会躺赚"都是骗局。量化是概率游戏,不是确定性印钞。
+
+---
+
+## 授权 / License
+
+源码公开,供学习与量化研究参考。版权归作者(© 2026 张佳泽 / [@Zhanghanser](https://github.com/Zhanghanser))所有。
+欢迎 Star ⭐、提 Issue 交流;商业用途或二次分发请先联系作者。
+
+> 如果这个项目对你有帮助,**点个 ⭐ Star 是对作者最大的鼓励!**

@@ -6,8 +6,10 @@ __pycache__/
 # ===== 下载的行情数据(体积大,不进版本库) =====
 data/
 
-# ===== 生成的图片 =====
+# ===== 生成的图片(运行生成的图忽略,但保留 README 用的截图) =====
 *.png
+!docs/screenshots/
+!docs/screenshots/*.png
 
 # ===== 虚拟环境 =====
 venv/
@@ -33,3 +35,6 @@ dist_onefile/
 # ===== 系统文件 =====
 .DS_Store
 Thumbs.db
+
+# ===== 本地推广草稿(不公开) =====
+推广文案.md
