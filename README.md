@@ -14,6 +14,7 @@ real-time signals & an honest decision desk. Pure Python, free, offline-capable.
 ![GitHub stars](https://img.shields.io/github/stars/Zhanghanser/quantify?style=flat&logo=github)
 ![Last commit](https://img.shields.io/github/last-commit/Zhanghanser/quantify)
 ![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Windows-lightgrey)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
 </div>
 
@@ -261,7 +262,7 @@ quantify/
 
 ## 授权 / License
 
-源码公开,供学习与量化研究参考。版权归作者(© 2026 张佳泽 / [@Zhanghanser](https://github.com/Zhanghanser))所有。
-欢迎 Star ⭐、提 Issue 交流;商业用途或二次分发请先联系作者。
+本项目采用 **[MIT License](LICENSE)** 开源 —— 你可以自由使用、修改、分发(商用亦可),只需保留版权与许可声明。
+版权所有 © 2026 张佳泽 / [@Zhanghanser](https://github.com/Zhanghanser)。
 
 > 如果这个项目对你有帮助,**点个 ⭐ Star 是对作者最大的鼓励!**
